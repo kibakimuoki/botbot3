@@ -1,0 +1,248 @@
+import ccxt
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import pytz
+import time
+import requests
+
+# Initialize the exchange (Binance as an example)
+exchange = ccxt.binance({
+    'apiKey': 'YOUR_API_KEY',
+    'secret': 'YOUR_SECRET_KEY',
+})
+
+
+# Function to get historical data
+def get_historical_data(symbol, timeframe, since):
+    ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since=since)
+    data = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+    data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
+    return data
+
+
+# Define the ICT Classic Buy/Sell Template logic
+def ict_classic_buy_sell(data):
+    print("Applying ICT Classic Buy/Sell Template")
+    # Your template logic here
+
+
+# Define the ICT London Swing to Z Day Template logic
+def ict_london_swing_z_day(data):
+    print("Applying ICT London Swing to Z Day Template")
+    # Your template logic here
+
+
+# Define the ICT London Swing to NYO/LC Reversal Template logic
+def ict_london_swing_nyo_lc_reversal(data):
+    print("Applying ICT London Swing to NYO/LC Reversal Template")
+    # Your template logic here
+
+
+# Function to check time-based conditions and apply corresponding template
+def check_time_based_conditions(data):
+    current_time = datetime.now(pytz.timezone('America/New_York')).time()
+    if datetime.strptime("08:00", "%H:%M").time() <= current_time <= datetime.strptime("12:00",
+                                                                                                        "%H:%M").time():
+        ict_classic_buy_sell(data)
+    elif datetime.strptime("14:00", "%H:%M").time() <= current_time <= datetime.strptime("20:00",
+                                                                                                          "%H:%M").time():
+        ict_london_swing_z_day(data)
+    elif datetime.strptime("01:00", "%H:%M").time() <= current_time <= datetime.strptime("05:00",
+                                                                                                          "%H:%M").time():
+        ict_london_swing_nyo_lc_reversal(data)
+    # Add more conditions based on other key times
+
+
+# Main function to fetch real-time data and apply trading logic
+def main():
+    symbol = 'BTC/USDT'
+    timeframe = '1h'
+    since = exchange.parse8601('2024-01-01T00:00:00Z')
+
+    while True:
+        data = get_historical_data(symbol, timeframe, since)
+        check_time_based_conditions(data)
+        time.sleep(60)  # Check every minute
+
+
+if __name__ == "__main__":
+    main()
+
+
+# Additional Code
+
+# Function to detect ICT London Swing to NYO/LC Reversal pattern
+def detect_ict_london_swing(data):
+    signals = []
+    for i in range(1, len(data)):
+        row = data.iloc[i]
+        previous_row = data.iloc[i - 1]
+
+        if (previous_row['timestamp'].hour >= 8 and previous_row['timestamp'].hour < 12 and
+                15 <= (row['low'] - previous_row['open']) <= 30):
+            buy_entry = row['low']
+            if row['high'] > previous_row['high']:
+                signals.append({
+                    'timestamp': row['timestamp'],
+                    'signal': 'BUY',
+                    'price': buy_entry
+                })
+    return pd.DataFrame(signals)
+
+
+# Load your data
+data = pd.read_csv('path_to_your_data.csv', parse_dates=['timestamp'])
+
+# Detect signals
+signals = detect_ict_london_swing(data)
+print(signals)
+
+# RSI and Position Size Calculation
+RSI_PERIOD = 9
+UPTREND_THRESHOLD = 50
+DOWNTREND_THRESHOLD = 50
+ACCOUNT_EQUITY = 1000
+
+
+def get_rsi(symbol, period):
+    # Placeholder for RSI calculation
+    pass
+
+
+def get_position_size(risk_percent, stop_loss_size, account_equity):
+    return (risk_percent / 100) * account_equity / stop_loss_size
+
+
+def check_margin_call(equity, used_margin):
+    return equity <= used_margin
+
+
+def trading_decision(rsi_value):
+    if rsi_value > UPTREND_THRESHOLD:
+        return "BUY"
+    elif rsi_value < DOWNTREND_THRESHOLD:
+        return "SELL"
+    else:
+        return "HOLD"
+
+
+symbol = "EURUSD"
+rsi_value = get_rsi(symbol, RSI_PERIOD)
+decision = trading_decision(rsi_value)
+position_size = get_position_size(1, 10, ACCOUNT_EQUITY)
+used_margin = 100
+
+if check_margin_call(ACCOUNT_EQUITY, used_margin):
+    print("Margin call expected. Reduce position size or deposit more funds.")
+else:
+    print(f"Trading decision: {decision}")
+    print(f"Position size: {position_size} units")
+
+kenya_time = datetime.utcnow() + timedelta(hours=3)
+print(f"Current time in Kenya: {kenya_time}")
+
+
+# Trading Bot Class
+class TradingBot:
+    def __init__(self, data):
+        self.data = data
+        self.order_block = None
+        self.entry_price = None
+        self.stop_loss = None
+        self.target_price = None
+
+    def identify_market_structure(self):
+        pass
+
+    def calculate_fib_levels(self, high, low):
+        return {
+            '50%': (high + low) / 2,
+            '61.8%': high - (high - low) * 0.618,
+            '70.5%': high - (high - low) * 0.705,
+            '70.9%': high - (high - low) * 0.709,
+            '88.6%': high - (high - low) * 0.886,
+        }
+
+    def identify_order_blocks(self):
+        pass
+
+    def find_liquidity_zones(self):
+        pass
+
+    def detect_po3_model(self):
+        pass
+
+    def place_trade(self):
+        pass
+
+    def run(self):
+        while True:
+            self.identify_market_structure()
+            self.find_liquidity_zones()
+            self.detect_po3_model()
+            self.place_trade()
+            time.sleep(60)
+
+
+data = pd.read_csv('market_data.csv')
+bot = TradingBot(data)
+bot.run()
+
+# Fetch Market Data and Identify Patterns
+API_URL = 'https://api.yourbroker.com'
+API_KEY = 'your_api_key'
+SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'XAUUSD', 'XAGUSD']
+TIMEFRAME = '1H'
+LOOKBACK_PERIOD = 14
+
+
+def fetch_market_data(symbol, timeframe):
+    response = requests.get(f'{API_URL}/market_data/{symbol}?timeframe={timeframe}&api_key={API_KEY}')
+    return response.json()
+
+
+def identify_liquidity_voids(data):
+    pass
+
+
+def identify_fair_value_gaps(data):
+    pass
+
+
+def identify_reversals(data):
+    pass
+
+
+def check_usdx_smt_correlation(data):
+    pass
+
+
+def place_order(symbol, order_type, volume):
+    response = requests.post(f'{API_URL}/orders', json={
+        'symbol': symbol,
+        'order_type': order_type,
+        'volume': volume,
+        'api_key': API_KEY
+    })
+    return response.json()
+
+
+def main():
+    while True:
+        for symbol in SYMBOLS:
+            data = fetch_market_data(symbol, TIMEFRAME)
+            liquidity_voids = identify_liquidity_voids(data)
+            fair_value_gaps = identify_fair_value_gaps(data)
+            reversals = identify_reversals(data)
+            smt_correlation = check_usdx_smt_correlation(data)
+            if reversals and smt_correlation:
+                place_order(symbol, 'buy', 1)
+            elif liquidity_voids and fair_value_gaps:
+                place_order(symbol, 'sell', 1)
+        time.sleep(60 * 60)
+
+
+if __name__ == '__main__':
+    main()
+      
